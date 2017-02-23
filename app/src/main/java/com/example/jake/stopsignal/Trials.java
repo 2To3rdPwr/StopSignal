@@ -82,22 +82,6 @@ public class Trials extends AppCompatActivity {
             timeAllowed = EASY;
 
         String data = "";
-        //ClickListeners
-        low.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                response = 0;
-                end = (long)0;
-                Log.d("Clicked", "Clicked!");
-            }
-        });
-        high.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                response = 1;
-                end = (long)0;
-            }
-        });
         //First, play both tones and light up side demonstrating which tone goes where
 
         //TODO: side demonstration
@@ -124,17 +108,30 @@ public class Trials extends AppCompatActivity {
                 //play right side tone
                 high.setText("Here");
                 low.setText("");
-                Log.d("Here","Right");
             }
             final Long time = System.currentTimeMillis();
             end = time + timeAllowed;
 
             //button click listeners
             Log.d("Here", "ClickListener");
-
+            low.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    response = 0;
+                    end = (long)0;
+                    Log.d("Clicked", "Clicked!");
+                }
+            });
+            high.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    response = 1;
+                    end = (long)0;
+                }
+            });
             //actually waiting
             //This is a really stupid hack
-            while(System.currentTimeMillis() < end) //TODO: Try a timer instead of this shitty hack.
+            while(System.currentTimeMillis() < end)
             {}//nothing happens yet
             //timeAllowed has passed
             responseTime = System.currentTimeMillis() - time;
