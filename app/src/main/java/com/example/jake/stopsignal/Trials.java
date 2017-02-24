@@ -2,6 +2,9 @@ package com.example.jake.stopsignal;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.media.MediaPlayer;
+import android.os.CountDownTimer;
+import android.os.Vibrator;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -9,25 +12,38 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.PopupWindow;
-
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.Random;
-import java.util.Scanner;
+import android.os.Handler;
+
 
 import static android.R.attr.data;
-import static android.R.attr.start;
-import static android.R.style.Theme_Material;
 import static android.R.style.Theme_Material_Dialog;
+import static com.example.jake.stopsignal.R.id.high;
+import static com.example.jake.stopsignal.R.id.low;
 
 public class Trials extends AppCompatActivity {
 
     static int HARD = 600;
     static int EASY = 1200;
     private int response;
-    private long end;
+    private String user;
+    private String diff;
+    private int timeAllowed;
+    private int side;
+    private String trialdata = "";
+    private long startTime;
+    private int stopFlag;
+    private MediaPlayer mediaPlayer;
+    private int responseTime;
+    private int vibTrials = 48;
+    //total trial data
+    private int block1Mean = 0;
+    private int nonStopCorrect;
+    private int stopCorrect;
+    private int timeoutCorrect;
+    private int nonStopAveTime;
+    private int stopAveTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,8 +51,8 @@ public class Trials extends AppCompatActivity {
         setContentView(R.layout.activity_trials);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         //getting previous info file
-        File filesDir = getFilesDir();
-        final File dataFile = new File(filesDir, "data");
+        this.diff = getIntent().getStringExtra("EXTRA_DIFF");
+        this.user = getIntent().getStringExtra("EXTRA_USERID");
         //alertdialog box
         AlertDialog.Builder builder = new AlertDialog.Builder(this, Theme_Material_Dialog);
         builder.setMessage("In the task, you will hear a series of low or high tones." +
@@ -53,116 +69,205 @@ public class Trials extends AppCompatActivity {
         builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
-                try {
-                    startTrial(dataFile);
-                } catch (FileNotFoundException e) {}
+                startTrials();
             }
         });
 
         AlertDialog dialog = builder.create();
         dialog.show();
-
     }
 
-    public void startTrial(File dataFile) throws FileNotFoundException {
+    public void startTrials() {
         //setup
-        FileOutputStream outputStream;
-        int timeAllowed;
-        int side;
-        long responseTime;
-        int answerOut;
-        Button low = (Button)findViewById(R.id.low);
-        Button high = (Button)findViewById(R.id.high);
-        Random rand = new Random();
-        Scanner in = new Scanner(dataFile);
-        in.next();
-        if(in.next().equals("true"))
+        if (diff.equals("true"))
             timeAllowed = HARD;
         else
             timeAllowed = EASY;
 
-        String data = "";
         //First, play both tones and light up side demonstrating which tone goes where
 
         //TODO: side demonstration
 
         //starting test trials
-        for(int i = 0; i < 48; i++)
-        {
-            //resetting repetitive values
-            Log.d("Reset","here I am?");
-            answerOut = 3;
-            response = 3;
-            responseTime = timeAllowed;
-            //trial
-            side = rand.nextInt(2);
-            if(side == 0)
-            {
-                //play left side tone
-                low.setText("Here");
-                high.setText("");
-                Log.d("Here","Left");
-            }
-            else
-            {
-                //play right side tone
-                high.setText("Here");
-                low.setText("");
-            }
-            final Long time = System.currentTimeMillis();
-            end = time + timeAllowed;
+        Log.d("Here","Starting Pretrial 1");
+        preTrial(48, false);
+    }
 
-            //button click listeners
-            Log.d("Here", "ClickListener");
-            low.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    response = 0;
-                    end = (long)0;
-                    Log.d("Clicked", "Clicked!");
-                }
-            });
-            high.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    response = 1;
-                    end = (long)0;
-                }
-            });
-            //actually waiting
-            //This is a really stupid hack
-            while(System.currentTimeMillis() < end)
-            {}//nothing happens yet
-            //timeAllowed has passed
-            responseTime = System.currentTimeMillis() - time;
-            //Now we compare response to side
-            if(response==side)
-                answerOut=1;
-            else if(response==3)
-                answerOut=3;
-            else
-                answerOut=2;
-            //data collection There are 7 values per trial
-            data += i + "\n" + 1 + "\n" + 0 + "\n" + side + "\n" + 0 + "\n" + responseTime + "\n" + answerOut;
-            //     trial     block     0=nostop     0=left     stopSignalTime                        1=correct
-            //                         1=stop       1=right                                          2=incorrect
-            //                                                                                       3=timeout
-            //sending data to file
-            try {
-                outputStream = openFileOutput("data", Context.MODE_PRIVATE);
-                outputStream.write(data.getBytes());
-                outputStream.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        File filesDir = getFilesDir();
-        Scanner input = new Scanner(dataFile);
-        String yee = "";
-        while (input.hasNext())
+    public void preTrial(final int toGo, final boolean block2)
+    {
+        Log.d("Here", "Pretrial Started");
+        response = 3;
+        responseTime = timeAllowed;
+        Random rand = new Random();
+        Button low = (Button) findViewById(R.id.low);
+        Button high = (Button) findViewById(R.id.high);
+        side = rand.nextInt(2);
+        Log.d("Here","SettingSide");
+        if(side == 0)
         {
-            yee += input.next() + " | ";
+            //play left side tone
+            mediaPlayer = MediaPlayer.create(Trials.this, R.raw.low_tone);
+            mediaPlayer.start();
+            //set a listener to delete the mediaPlayer when it is done
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    if(mediaPlayer!=null)
+                    {
+                        mediaPlayer.release();
+                        mediaPlayer = null;
+                    }
+                }
+            });
+            Log.d("Here","Left");
         }
-        Log.d("Output", yee);
+        else
+        {
+            //play right side tone
+            mediaPlayer = MediaPlayer.create(Trials.this, R.raw.high_tone);
+            mediaPlayer.start();
+            //set a listener to delete the mediaPlayer when it is done
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    if(mediaPlayer!=null)
+                    {
+                        mediaPlayer.release();
+                        mediaPlayer = null;
+                    }
+                }
+            });
+            Log.d("Here","Right");
+        }
+        if(block2)
+        {
+            int whatTrial = rand.nextInt(toGo);
+            if(whatTrial <= vibTrials)//decide if this is one of the 48 out of 120
+            {
+                vibTrials--;
+                side = 3;
+                stopFlag=1;
+            }
+            else
+                stopFlag=0;
+        }
+
+        //actual trial occurs with the listeners
+        //CountdownTimer
+        final Handler countDown = new Handler();
+        //countDown's runnable
+        final Runnable timer = new Runnable() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        postTrial(toGo-1, block2);
+                    }
+                });
+            }
+        };
+
+        Log.d("Here", "CountDownTimer");
+
+        //TODO: vibrate trials
+        /**
+        if(block2)//&&48 out of 120
+        {
+            final Handler vibration=new Handler();
+                @Override
+                public void onTick(long millisUntilFinished) {}
+
+                @Override
+                public void onFinish() {
+                    Vibrator vibrator = (Vibrator)getSystemService(VIBRATOR_SERVICE);
+                    vibrator.vibrate(40);
+                }
+            };
+        }*/
+
+        //button click listeners
+        Log.d("Here", "ClickListener");
+        low.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                response = 0;
+                Log.d("Clicked", "Clicked!");
+                responseTime = (int)(System.currentTimeMillis() - startTime);
+            }
+        });
+        high.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                response = 1;
+                Log.d("Clicked", "Clicked!");
+                responseTime = (int)(System.currentTimeMillis() - startTime);
+            }
+        });
+        startTime = System.currentTimeMillis();
+
+        //start the timer
+        countDown.postDelayed(timer, timeAllowed);
+        //block 2 vibration trials
+        if(block2 && stopFlag == 1)
+        {
+            final Handler vibrationTimer = new Handler();
+            final Runnable vibrateRunner = new Runnable() {
+                @Override
+                public void run() {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Vibrator vibrator = (Vibrator)getSystemService(VIBRATOR_SERVICE);
+                            vibrator.vibrate(40);
+                        }
+                    });
+                }
+            };
+            vibrationTimer.postDelayed(vibrateRunner, block1Mean - 220);
+        }
+    }
+
+    public void postTrial(int toGo, boolean block2)
+    {
+        //What trial is this?
+        int index;
+        if(block2)
+            index = 120 - toGo;
+        else
+            index = 48 - toGo;
+        //How did the participant do?
+        int answerOut;
+        if(response == side)
+            answerOut=1;
+        else if(response == 3)
+            answerOut=3;
+        else
+            answerOut=2;
+        //what block is this test?
+        int block;
+        if(block2)
+            block = 2;
+        else
+            block = 1;
+        //SAVE THE DATA!!!
+        trialdata += index + "\n" + block + "\n" + stopFlag + "\n" + side + "\n" + (stopFlag*(block1Mean-220)) + "\n" + responseTime + "\n" + answerOut + "\n";
+        //            trial         block         0=nostop         0=left               stopSignalTime                                       1=correct
+        //                                        1=stop           1=right                                                                   2=incorrect
+        //                                                                                                                                   3=TimedOut
+
+        //Where to from here?
+        if(toGo == 0 && !block2) {//block 1 done. Go to block 2
+            preTrial(120, true);
+        }
+        else if(toGo == 0 && block2)//block 2 done. Go
+            done(trialdata);
+        else
+            preTrial(toGo, block2);
+    }
+
+    public void done(String trialdata)
+    {
+        //TODO: process that long-ass string into a document for human consumption
     }
 }

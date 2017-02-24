@@ -88,30 +88,10 @@ public class MainActivity extends AppCompatActivity {
     //All it good. Continue to experiment
     public void cont(View view) throws FileNotFoundException {
         //save data
-        String filename = "data";
-        String string = userID + "\n" + difficulty;
-        //put it in the file
-        FileOutputStream outputStream;
-        try {
-             outputStream = openFileOutput(filename, Context.MODE_PRIVATE);
-             outputStream.write(string.getBytes());
-             outputStream.close();
-        } catch (Exception e) {
-             e.printStackTrace();
-        }
-
-        /*
-        File filesDir = getFilesDir();
-        Scanner input = new Scanner(new File(filesDir, filename));
-        String yee = "";
-        while (input.hasNext())
-        {
-            yee += input.next();
-        }
-        Toast.makeText(this, yee, Toast.LENGTH_LONG).show();
-        */
-
         //Next activity
-        startActivity(new Intent(MainActivity.this, Trials.class));
+        Intent next = new Intent(MainActivity.this, Trials.class);
+        next.putExtra("EXTRA_USERID", userID);
+        next.putExtra("EXTRA_DIFF", difficulty.toString());
+        startActivity(next);
     }
 }
