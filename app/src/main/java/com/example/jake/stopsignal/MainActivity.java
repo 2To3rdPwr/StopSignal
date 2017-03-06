@@ -1,6 +1,5 @@
 package com.example.jake.stopsignal;
 
-import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -9,12 +8,8 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.util.Scanner;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -78,7 +73,12 @@ public class MainActivity extends AppCompatActivity {
     public void summary()
     {
         TextView s = (TextView)findViewById(R.id.confirm_plz);
-        String sString = "Participant: " + userID + "\nHarder Mode: " + difficulty;
+        String cdtn;
+        if(difficulty)
+            cdtn = "2";
+        else
+            cdtn = "1";
+        String sString = "Participant: " + userID + "\nCondition: " + cdtn;
         s.setText(sString);
         Button back = (Button)findViewById(R.id.back);
         back.setVisibility(View.VISIBLE);
