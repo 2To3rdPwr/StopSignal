@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.jake.stopsignal">
 
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <application
         android:allowBackup="true"
         android:configChanges="keyboardHidden|orientation|screenSize"
@@ -19,7 +21,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".Trials"
+        <activity
+            android:name=".Trials"
+            android:screenOrientation="landscape" />
+        <activity android:name=".ThankYou"
             android:screenOrientation="landscape"></activity>
     </application>
 

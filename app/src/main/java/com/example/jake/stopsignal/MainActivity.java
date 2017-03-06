@@ -1,6 +1,5 @@
 package com.example.jake.stopsignal;
 
-import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -9,12 +8,8 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.util.Scanner;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -78,7 +73,12 @@ public class MainActivity extends AppCompatActivity {
     public void summary()
     {
         TextView s = (TextView)findViewById(R.id.confirm_plz);
-        String sString = "Participant: " + userID + "\nHarder Mode: " + difficulty;
+        String cdtn;
+        if(difficulty)
+            cdtn = "2";
+        else
+            cdtn = "1";
+        String sString = "Participant: " + userID + "\nCondition: " + cdtn;
         s.setText(sString);
         Button back = (Button)findViewById(R.id.back);
         back.setVisibility(View.VISIBLE);
@@ -88,30 +88,10 @@ public class MainActivity extends AppCompatActivity {
     //All it good. Continue to experiment
     public void cont(View view) throws FileNotFoundException {
         //save data
-        String filename = "data";
-        String string = userID + "\n" + difficulty;
-        //put it in the file
-        FileOutputStream outputStream;
-        try {
-             outputStream = openFileOutput(filename, Context.MODE_PRIVATE);
-             outputStream.write(string.getBytes());
-             outputStream.close();
-        } catch (Exception e) {
-             e.printStackTrace();
-        }
-
-        /*
-        File filesDir = getFilesDir();
-        Scanner input = new Scanner(new File(filesDir, filename));
-        String yee = "";
-        while (input.hasNext())
-        {
-            yee += input.next();
-        }
-        Toast.makeText(this, yee, Toast.LENGTH_LONG).show();
-        */
-
         //Next activity
-        startActivity(new Intent(MainActivity.this, Trials.class));
+        Intent next = new Intent(MainActivity.this, Trials.class);
+        next.putExtra("EXTRA_USERID", userID);
+        next.putExtra("EXTRA_DIFF", difficulty.toString());
+        startActivity(next);
     }
 }
