@@ -55,6 +55,8 @@ public class Trials extends AppCompatActivity {
     private int block1PTrials = 0;
     private int block2PTrails = 0;
 
+    private boolean practiceTrials = true;
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -178,6 +180,12 @@ public class Trials extends AppCompatActivity {
                         dialog.dismiss();
                     }
                 });
+                builder.setNegativeButton("Skip", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        practiceTrials = false;
+                        dialog.dismiss();
+                    }
+                });
                 builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialog) {
@@ -202,8 +210,10 @@ public class Trials extends AppCompatActivity {
         Log.d("Here","Starting Pretrial 1P");
         if(DEBUG)
             interTrial(17, false, true);
-        else
+        else if(practiceTrials)
             ready(17, false, true);
+        else
+            ready(48, false, false);
     }
 
     public void interTrial(final int toGo, final boolean block2, final boolean practice)
@@ -483,7 +493,7 @@ public class Trials extends AppCompatActivity {
                 dialog.show();
             }
         }
-        else if(toGo == 0 && !block2 && !practice) {//block 1 done. Go to practice 2
+        else if(toGo == 0 && !block2 && !practice && practiceTrials) {//block 1 done. Go to practice 2
             streak = 0;
             //set block1Mean
             block1Mean = block1Mean / 48;
@@ -509,9 +519,11 @@ public class Trials extends AppCompatActivity {
             AlertDialog dialog = builder.create();
             dialog.show();
         }
-        else if(toGo <= 0 && (streak >= 9 || DEBUG) && block2 && practice)//practice 2 is done. Go to block 2
+        else if(toGo == 0 && block2 && !practice)//block 2 done. Go to ThankYou
+            done();
+        else if(toGo <= 0 && (streak >= 9 || DEBUG || !practiceTrials) && ((block2 && practice) || !practiceTrials))//practice 2 is done. Go to block 2
         {
-            if(toGo <= 0 && (streak >= 9 || DEBUG))
+            if(toGo <= 0 && (streak >= 9 || DEBUG || !practiceTrials))
             {
                 //alertdialog box
                 AlertDialog.Builder builder = new AlertDialog.Builder(this, Theme_Material_Dialog);
@@ -536,10 +548,9 @@ public class Trials extends AppCompatActivity {
                 dialog.show();
             }
         }
-        else if(toGo == 0 && block2 && !practice)//block 2 done. Go to ThankYou
-            done();
         else {//continue with this block
             interTrial(toGo, block2, practice);
+            Log.d("To Go:", Integer.toString(toGo));
         }
     }
 

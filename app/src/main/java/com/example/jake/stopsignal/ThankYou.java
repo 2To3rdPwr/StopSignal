@@ -1,6 +1,7 @@
 package com.example.jake.stopsignal;
 
 import android.os.Environment;
+import android.support.annotation.BoolRes;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -143,9 +144,18 @@ public class ThankYou extends AppCompatActivity {
           // Get the directory for the user's public pictures directory.
           File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), fileDir);
           if (!file.mkdirs()) {
-                //Log.e(LOG_TAG, "Directory not created");
+                Log.e("FILE", "Directory not created");
+                Log.e("ExternalStorage", Boolean.toString(isExternalStorageWritable()));
               }
           return file;
+    }
+
+    public boolean isExternalStorageWritable() {
+    String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+        return true;
+        }
+    return false;
     }
 
     public void toFile(File file, String out)
