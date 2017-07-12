@@ -48,6 +48,26 @@
         android:visibility="invisible"
         android:onClick="hard"/>
 
+    <Button
+        android:id="@+id/ptice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Practice"
+        android:layout_toLeftOf="@+id/participant"
+        android:layout_centerVertical="true"
+        android:visibility="invisible"
+        android:onClick="practice"/>
+
+    <Button
+        android:id="@+id/skip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Skip"
+        android:layout_toRightOf="@+id/participant"
+        android:layout_centerVertical="true"
+        android:visibility="invisible"
+        android:onClick="skip"/>
+
     <TextView
         android:id="@+id/confirm_plz"
         android:layout_width="wrap_content"

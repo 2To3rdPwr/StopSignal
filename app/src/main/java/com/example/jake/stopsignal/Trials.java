@@ -33,14 +33,13 @@ public class Trials extends AppCompatActivity {
     private String diff;
     private int timeAllowed;
     private int side;
-    private String[][] trialdata = new String[240][6];
+    private String[][] trialdata;
     private long startTime;
     private int stopFlag = 0;
     private MediaPlayer mediaPlayer;
     private int responseTime;
-    private int vibTrials = 47;
+    private int vibTrials;
     //total trial data
-    //private double block1Mean = 0;
     private double nonStopCorrect = 0;
     private double stopCorrect = 0;
     private double timeout = 0;
@@ -54,6 +53,11 @@ public class Trials extends AppCompatActivity {
     private double block2PMean = 0;
     private int block1PTrials = 0;
     private int block2PTrails = 0;
+    private int noTrialsB1;
+    private int noTrialsB2;
+    private int noStopTrials = 0;
+    private int noNonstopTrials = 0;
+    private int antistreak = 0;
 
     private boolean practiceTrials = true;
 
@@ -74,9 +78,24 @@ public class Trials extends AppCompatActivity {
         //getting previous info file
         this.diff = getIntent().getStringExtra("EXTRA_DIFF");
         this.user = getIntent().getStringExtra("EXTRA_USERID");
+        this.practiceTrials = Boolean.parseBoolean(getIntent().getStringExtra("EXTRA_PRACTICE"));
+        if(diff.equals("false"))
+        {
+            noTrialsB1 = 21;
+            noTrialsB2 = 65;
+            vibTrials = 16;
+        }
+        else
+        {
+            noTrialsB1 = 28;
+            noTrialsB2 = 85;
+            vibTrials = 21;
+        }
+
+        trialdata  = new String[noTrialsB1+noTrialsB2][6];
 
         //alertdialog box
-        AlertDialog.Builder builder = new AlertDialog.Builder(Trials.this, Theme_Material_Dialog);
+        /**AlertDialog.Builder builder = new AlertDialog.Builder(Trials.this, Theme_Material_Dialog);
         builder.setMessage(R.string.first_box);
         builder.setNeutralButton("Continue", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
@@ -112,7 +131,10 @@ public class Trials extends AppCompatActivity {
         });
 
         AlertDialog dialog = builder.create();
+        dialog.setCanceledOnTouchOutside(false);
         dialog.show();
+         */
+        demoTones();
     }
 
     public void demoTones()
@@ -172,29 +194,29 @@ public class Trials extends AppCompatActivity {
                 lowButton.setText("");
 
                 //alertdialog box
-                AlertDialog.Builder builder = new AlertDialog.Builder(Trials.this, Theme_Material_Dialog);
-                builder.setMessage(R.string.trial1p);
-                builder.setNeutralButton("Practice", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        //user hit ok
-                        dialog.dismiss();
-                    }
-                });
-                builder.setNegativeButton("Skip", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        practiceTrials = false;
-                        dialog.dismiss();
-                    }
-                });
-                builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialog) {
-                        startTrials();
-                    }
-                });
+                if(practiceTrials) {
+                    boolean ok = false;
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Trials.this, Theme_Material_Dialog);
+                    builder.setMessage(R.string.trial1p);
+                    builder.setNeutralButton("Practice", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            //user hit ok
+                            dialog.dismiss();
+                        }
+                    });
+                    builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override
+                        public void onDismiss(DialogInterface dialog) {
+                            startTrials();
+                        }
+                    });
 
-                AlertDialog dialog = builder.create();
-                dialog.show();
+                    AlertDialog dialog = builder.create();
+                    dialog.setCanceledOnTouchOutside(false);
+                    dialog.show();
+                }
+                else
+                    startTrials();
             }
         });
     }
@@ -209,11 +231,11 @@ public class Trials extends AppCompatActivity {
         //starting test trials
         Log.d("Here","Starting Pretrial 1P");
         if(DEBUG)
-            interTrial(17, false, true);
+            interTrial(10, false, true);
         else if(practiceTrials)
-            ready(17, false, true);
+            ready(10, false, true);
         else
-            ready(48, false, false);
+            ready(noTrialsB1, false, false);
     }
 
     public void interTrial(final int toGo, final boolean block2, final boolean practice)
@@ -230,7 +252,7 @@ public class Trials extends AppCompatActivity {
                     stopFlag = 0;
             } else {
                 int whatTrial = rand.nextInt(toGo);
-                if (whatTrial <= vibTrials)//decide if this is one of the 48 out of 120
+                if (whatTrial <= vibTrials)//decide if this is one of the stop trials. 25% of the trials are stop trials
                 {
                     vibTrials--;
                     stopFlag = 1;
@@ -284,6 +306,8 @@ public class Trials extends AppCompatActivity {
         final Random rand = new Random();
         Button low = (Button) findViewById(R.id.low);
         Button high = (Button) findViewById(R.id.high);
+        low.setClickable(true);
+        high.setClickable(true);
         side = rand.nextInt(2);
         Log.d("Here","SettingSide");
         if(side == 0 && !DEBUG)
@@ -389,16 +413,17 @@ public class Trials extends AppCompatActivity {
 
     public void postTrial(int toGo, boolean block2, boolean practice)
     {
+        Log.d("ResTime", Integer.toString(responseTime));
         if(!practice) {//non-practice trials
             //What trial is this?
             int index;
             if (block2)
-                index = 192 - toGo;
+                index = noTrialsB2 - toGo;
             else
-                index = 48 - toGo;
+                index = noTrialsB1 - toGo;
             int yee = index;
             if (block2)
-                yee += 48;
+                yee += noTrialsB1;
             //How did the participant do?
             int answerOut;
             if (response == side)
@@ -432,10 +457,12 @@ public class Trials extends AppCompatActivity {
             trialdata[yee - 1] = d;
             //Calculating averages and such
             if (stopFlag == 0) {
+                noNonstopTrials++;
                 nonStopAveTime += responseTime;
                 if (answerOut == 1)
                     nonStopCorrect++;
             } else {
+                noStopTrials++;
                 stopAveTime += responseTime;
                 if (answerOut == 1)
                     stopCorrect++;
@@ -448,10 +475,14 @@ public class Trials extends AppCompatActivity {
                 block1Mean += responseTime;
         }
         else {//practice trials
-            if(response == side)
+            if(response == side) {
                 streak++;
-            else
+                antistreak = 0;
+            }
+            else {
                 streak = 0;
+                antistreak++;
+            }
             if(block2) {
                 block2PMean += responseTime;
                 block2PTrails++;
@@ -460,7 +491,23 @@ public class Trials extends AppCompatActivity {
                 block1PMean += responseTime;
                 block1PTrials++;
             }
+            if(antistreak >=7)
+            {
+                AlertDialog.Builder builder = new AlertDialog.Builder(Trials.this, Theme_Material_Dialog);
+                builder.setMessage(R.string.try_harder);
+                builder.setNeutralButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        //user hit ok
+                        dialog.dismiss();
+                    }
+                });
+                AlertDialog dialog = builder.create();
+                dialog.setCanceledOnTouchOutside(false);
+                dialog.show();
+                antistreak = 0;
+            }
             Log.d("Streak",Integer.toString(streak));
+            Log.d("Antistreak", Integer.toString(antistreak));
             Log.d("TOGO", Integer.toString(toGo));
         }
 
@@ -468,67 +515,48 @@ public class Trials extends AppCompatActivity {
         //Where to from here?
         if(toGo <= 0 && (streak >= 9 || DEBUG) && !block2 && practice)//practice 1 is done. Go to block 1
         {
+            antistreak = 0;
             if(toGo <= 0 && (streak >= 9 || DEBUG))
             {
                 //alertdialog box
-                AlertDialog.Builder builder = new AlertDialog.Builder(this, Theme_Material_Dialog);
-                builder.setMessage(R.string.trial1);
-                builder.setNeutralButton("Start", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        //user hit ok
-                        dialog.dismiss();
-                    }
-                });
-                builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialog) {
-                        if(DEBUG)
-                            interTrial(48, false, false);
-                        else
-                            ready(48, false, false);
-                    }
-                });
+                if(practiceTrials) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this, Theme_Material_Dialog);
+                    builder.setMessage(R.string.trial1);
+                    builder.setNeutralButton("Start", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            //user hit ok
+                            dialog.dismiss();
+                        }
+                    });
+                    builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override
+                        public void onDismiss(DialogInterface dialog) {
+                            if (DEBUG)
+                                interTrial(noTrialsB1, false, false);
+                            else
+                                ready(noTrialsB1, false, false);
+                        }
+                    });
 
-                AlertDialog dialog = builder.create();
-                dialog.show();
+                    AlertDialog dialog = builder.create();
+                    dialog.setCanceledOnTouchOutside(false);
+                    dialog.show();
+                }
+                else if(DEBUG)
+                    interTrial(noTrialsB1, false, false);
+                else
+                    ready(noTrialsB1, false, false);
             }
         }
         else if(toGo == 0 && !block2 && !practice && practiceTrials) {//block 1 done. Go to practice 2
             streak = 0;
             //set block1Mean
-            block1Mean = block1Mean / 48;
+            block1Mean = block1Mean / noTrialsB1;
             //alertdialog box
-            AlertDialog.Builder builder = new AlertDialog.Builder(this, Theme_Material_Dialog);
-            builder.setMessage(R.string.trial2p);
-            builder.setNeutralButton("Practice", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    //user hit ok
-                    dialog.dismiss();
-                }
-            });
-            builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                @Override
-                public void onDismiss(DialogInterface dialog) {
-                    if(DEBUG)
-                        interTrial(17, true, true);
-                    else
-                        ready(17, true, true);
-                }
-            });
-
-            AlertDialog dialog = builder.create();
-            dialog.show();
-        }
-        else if(toGo == 0 && block2 && !practice)//block 2 done. Go to ThankYou
-            done();
-        else if(toGo <= 0 && (streak >= 9 || DEBUG || !practiceTrials) && ((block2 && practice) || !practiceTrials))//practice 2 is done. Go to block 2
-        {
-            if(toGo <= 0 && (streak >= 9 || DEBUG || !practiceTrials))
-            {
-                //alertdialog box
+            if(practiceTrials) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this, Theme_Material_Dialog);
-                builder.setMessage(R.string.trial2);
-                builder.setNeutralButton("Start", new DialogInterface.OnClickListener() {
+                builder.setMessage(R.string.trial2p);
+                builder.setNeutralButton("Practice", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         //user hit ok
                         dialog.dismiss();
@@ -537,15 +565,61 @@ public class Trials extends AppCompatActivity {
                 builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialog) {
-                        if(DEBUG)
-                            interTrial(192, true, false);
+                        if (DEBUG)
+                            interTrial(10, true, true);
                         else
-                            ready(192, true, false);
+                            ready(10, true, true);
                     }
                 });
 
                 AlertDialog dialog = builder.create();
+                dialog.setCanceledOnTouchOutside(false);
                 dialog.show();
+            }
+            else if(DEBUG)
+                interTrial(10, true, true);
+            else
+                ready(10, true, true);
+        }
+        else if(toGo == 0 && block2 && !practice)//block 2 done. Go to ThankYou
+            done();
+        else if(toGo <= 0 && (streak >= 9 || DEBUG || !practiceTrials) && ((block2 && practice) || !practiceTrials))//practice 2 is done. Go to block 2
+        {
+            antistreak = 0;
+            if(toGo <= 0 && (streak >= 9 || DEBUG || !practiceTrials))
+            {
+                if(!practiceTrials)
+                {
+                    block1Mean = block1Mean / noTrialsB1;
+                }
+                //alertdialog box
+                if(practiceTrials) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this, Theme_Material_Dialog);
+                    builder.setMessage(R.string.trial2);
+                    builder.setNeutralButton("Start", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            //user hit ok
+                            dialog.dismiss();
+                        }
+                    });
+                    builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override
+                        public void onDismiss(DialogInterface dialog) {
+                            if (DEBUG)
+                                interTrial(noTrialsB2, true, false);
+                            else
+                                ready(noTrialsB2, true, false);
+                        }
+                    });
+
+                    AlertDialog dialog = builder.create();
+                    dialog.setCanceledOnTouchOutside(false);
+                    dialog.show();
+                }
+                else if(DEBUG || !practiceTrials)
+                    interTrial(noTrialsB2, true, false);
+                else
+                    ready(noTrialsB2, true, false);
             }
         }
         else {//continue with this block
@@ -558,18 +632,19 @@ public class Trials extends AppCompatActivity {
     {
         Bundle b = new Bundle();
         b.putSerializable("EXTRA_DATA", trialdata);
-        stopAveTime = stopAveTime / 48;
-        nonStopAveTime = nonStopAveTime / 192;
-        stopCorrect = stopCorrect / 48 * 100;
-        nonStopCorrect = nonStopCorrect / 192 * 100;
-        timeout = timeout / 240 * 100;
+        stopAveTime = stopAveTime / noStopTrials;
+        nonStopAveTime = nonStopAveTime / noNonstopTrials;
+        stopCorrect = stopCorrect / noStopTrials * 100;
+        nonStopCorrect = nonStopCorrect / noNonstopTrials * 100;
+        timeout = timeout / (noTrialsB1 + noTrialsB2) * 100;
         block1PMean = block1PMean / block1PTrials;
         block2PMean = block2PMean / block2PTrails;
-        block2Mean = block2Mean / 192;
+        block2Mean = block2Mean / noTrialsB2;
 
         Intent next = new Intent(Trials.this, ThankYou.class);
         next.putExtra("EXTRA_USERID", user);
         next.putExtra("EXTRA_DIFF", diff);
+        next.putExtra("EXTRA_PRACTICE", Boolean.toString(practiceTrials));
         next.putExtras(b);
         next.putExtra("EXTRA_RESPONSE_TIME_STOP", Double.toString(stopAveTime));
         next.putExtra("EXTRA_RESPONSE_TIME_GO", Double.toString(nonStopAveTime));
@@ -585,6 +660,10 @@ public class Trials extends AppCompatActivity {
     }
     public void ready(final int toGo, final boolean block2, final boolean practice)
     {
+        Button low = (Button) findViewById(R.id.low);
+        Button high = (Button) findViewById(R.id.high);
+        low.setClickable(false);
+        high.setClickable(false);
         final Handler countDown = new Handler();
         //countDown's runnable
         final Runnable timer = new Runnable() {

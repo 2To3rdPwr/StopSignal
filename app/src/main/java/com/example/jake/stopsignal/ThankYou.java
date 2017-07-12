@@ -19,7 +19,7 @@ import static java.util.Calendar.getInstance;
 public class ThankYou extends AppCompatActivity {
 
     private String diff;
-    private int[][] trialsData = new int[240][6];
+    private int[][] trialsData;
     private String user;
     private double stopTimeAve;
     private double nonStopTimeAve;
@@ -31,6 +31,8 @@ public class ThankYou extends AppCompatActivity {
     private double b1PMRT;
     private double b2PMRT;
     private int vibTime;
+    private int noTrials;
+    private boolean practiceTrials;
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -47,6 +49,12 @@ public class ThankYou extends AppCompatActivity {
         setContentView(R.layout.activity_thank_you);
 
         this.diff=getIntent().getStringExtra("EXTRA_DIFF");
+        if(diff.equals("true"))
+            noTrials = 113;
+        else
+            noTrials = 86;
+        trialsData = new int[noTrials][6];
+        practiceTrials = Boolean.parseBoolean(getIntent().getStringExtra("EXTRA_PRACTICE"));
         //Trials data!
         String[][] dataInterpreter = null;
         Object[] objectArray = (Object[]) getIntent().getExtras().getSerializable("EXTRA_DATA");
@@ -84,7 +92,12 @@ public class ThankYou extends AppCompatActivity {
     {
         Calendar c = getInstance();
         String fileName = (c.get(Calendar.MONTH)+1) + "." + c.get(Calendar.DAY_OF_MONTH) + " " + c.get(Calendar.HOUR) + ":" + c.get(Calendar.MINUTE) + ".txt";
-        File file = new File(getDocStorageDir("StopTrials"), fileName);
+        File file;
+        if(practiceTrials)
+            file = new File(getDocStorageDir("StopTrialsPractice"), fileName);
+        else
+            file = new File(getDocStorageDir("StopTrials"), fileName);
+
         Log.d("File", fileName);
         String out = "", add;
         out = "Participant ID: " + user + "      Trial type: ";
@@ -95,7 +108,7 @@ public class ThankYou extends AppCompatActivity {
 
         out += " Trial, Block, Trial Type, Required Response, Response Time, Status\n";
         toFile(file, out);
-        for(int i = 0; i < 240; i++) {
+        for(int i = 0; i < noTrials; i++) {
             //out += "       |       |            |                    |                      |               |       \n";
             add = Integer.toString(trialsData[i][0]);
             out = add + ", ";
@@ -129,8 +142,9 @@ public class ThankYou extends AppCompatActivity {
         }
         out = String.format("%s %.0f %s", "Average response time for block 1: ", b1MRT, "ms\n");
         out += String.format("%s %.0f %s", "Average response time for block 2: ", b2MRT, "ms\n");
+        if(practiceTrials){
         out += String.format("%s %.0f %s", "Average response time for block 1 Practice: ", b1PMRT, "ms\n");
-        out += String.format("%s %.0f %s", "Average response time for block 2 Practice: ", b2PMRT, "ms\n");
+        out += String.format("%s %.0f %s", "Average response time for block 2 Practice: ", b2PMRT, "ms\n");}
         out += String.format("%s %.0f %s", "Average response time in stop trials: ", stopTimeAve, "ms\n");
         out += String.format("%s %.0f %s", "Average response time in non-stop trials: ", nonStopTimeAve, "ms\n");
         out += String.format("%s %d %s", "Time between vibration and tone: ", vibTime, "ms\n");

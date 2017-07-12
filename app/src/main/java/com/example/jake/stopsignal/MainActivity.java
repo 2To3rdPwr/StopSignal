@@ -20,6 +20,7 @@ public class MainActivity extends AppCompatActivity {
 
     private String userID;
     private Boolean difficulty;
+    private Boolean practicetrials;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +65,10 @@ public class MainActivity extends AppCompatActivity {
         be.setVisibility(View.INVISIBLE);
         Button bh = (Button)findViewById(R.id.hard_button);
         bh.setVisibility(View.INVISIBLE);
-        summary();
+        Button bp = (Button)findViewById(R.id.ptice);
+        bp.setVisibility(View.VISIBLE);
+        Button bs = (Button)findViewById(R.id.skip);
+        bs.setVisibility(View.VISIBLE);
     }
 
     public void hard(View view)
@@ -74,6 +78,27 @@ public class MainActivity extends AppCompatActivity {
         be.setVisibility(View.INVISIBLE);
         Button bh = (Button)findViewById(R.id.hard_button);
         bh.setVisibility(View.INVISIBLE);
+        Button bp = (Button)findViewById(R.id.ptice);
+        bp.setVisibility(View.VISIBLE);
+        Button bs = (Button)findViewById(R.id.skip);
+        bs.setVisibility(View.VISIBLE);
+    }
+    public void practice(View view)
+    {
+        practicetrials = true;
+        Button bp = (Button)findViewById(R.id.ptice);
+        bp.setVisibility(View.INVISIBLE);
+        Button bs = (Button)findViewById(R.id.skip);
+        bs.setVisibility(View.INVISIBLE);
+        summary();
+    }
+    public void skip(View view)
+    {
+        practicetrials = false;
+        Button bp = (Button)findViewById(R.id.ptice);
+        bp.setVisibility(View.INVISIBLE);
+        Button bs = (Button)findViewById(R.id.skip);
+        bs.setVisibility(View.INVISIBLE);
         summary();
     }
     //summary & confirmation
@@ -99,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
         Intent next = new Intent(MainActivity.this, Trials.class);
         next.putExtra("EXTRA_USERID", userID);
         next.putExtra("EXTRA_DIFF", difficulty.toString());
+        next.putExtra("EXTRA_PRACTICE", practicetrials.toString());
         startActivity(next);
     }
 
