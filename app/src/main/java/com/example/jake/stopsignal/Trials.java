@@ -58,6 +58,8 @@ public class Trials extends AppCompatActivity {
     private int noStopTrials = 0;
     private int noNonstopTrials = 0;
     private int antistreak = 0;
+    private int b1Correct = 0;
+    private int b2Correct = 0;
 
     private boolean practiceTrials = true;
 
@@ -456,6 +458,10 @@ public class Trials extends AppCompatActivity {
             //Log.i("ThisTrial'sData", d);
             trialdata[yee - 1] = d;
             //Calculating averages and such
+            if(answerOut == 1 && !block2)
+                b1Correct++;
+            if(answerOut==1 && block2)
+                b2Correct++;
             if (stopFlag == 0) {
                 noNonstopTrials++;
                 nonStopAveTime += responseTime;
@@ -656,6 +662,8 @@ public class Trials extends AppCompatActivity {
         next.putExtra("EXTRA_B2MEAN", Double.toString(block2Mean));
         next.putExtra("EXTRA_B1PMEAN", Double.toString(block1PMean));
         next.putExtra("EXTRA_B2PMEAN", Double.toString(block2PMean));
+        next.putExtra("EXTRA_B1CORRECT", Double.toString(b1Correct/noTrialsB1));
+        next.putExtra("EXTRA_B2CORRECT", Double.toString((b2Correct/noTrialsB2)+stopCorrect));
         startActivity(next);
     }
     public void ready(final int toGo, final boolean block2, final boolean practice)

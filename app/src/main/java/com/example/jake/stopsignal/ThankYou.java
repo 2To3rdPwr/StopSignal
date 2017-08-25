@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.View;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -33,6 +34,9 @@ public class ThankYou extends AppCompatActivity {
     private int vibTime;
     private int noTrials;
     private boolean practiceTrials;
+    double percentCB1;
+    double percentCB2;
+    private boolean parsed = false;
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -80,18 +84,27 @@ public class ThankYou extends AppCompatActivity {
         this.b2MRT=Double.parseDouble(getIntent().getStringExtra("EXTRA_B2MEAN"));
         this.b2PMRT=Double.parseDouble(getIntent().getStringExtra("EXTRA_B2PMEAN"));
         this.vibTime=Integer.parseInt(getIntent().getStringExtra("EXTRA_VIBTIME"));
-
-        parseData();
+        this.percentCB1=Double.parseDouble(getIntent().getStringExtra("EXTRA_B1CORRECT"));
+        this.percentCB2=Double.parseDouble(getIntent().getStringExtra("EXTRA_B2CORRECT"));
     }
 
     /**
      * Interprets that long-ass string for human consumption
      * @return out: a nicely formatted string fit for emailing
      */
-    public void parseData()
+    public void parseData(View view)
     {
+        if (parsed == false)
+            parsed = true;
+        else
+            return;
         Calendar c = getInstance();
-        String fileName = (c.get(Calendar.MONTH)+1) + "." + c.get(Calendar.DAY_OF_MONTH) + " " + c.get(Calendar.HOUR) + ":" + c.get(Calendar.MINUTE) + ".txt";
+        String nonDistr;
+        if(practiceTrials)
+            nonDistr = "NON";
+        else
+            nonDistr = "DISTR";
+        String fileName = user + " " + nonDistr + " " + (c.get(Calendar.MONTH)+1) + "." + c.get(Calendar.DAY_OF_MONTH) + " " + c.get(Calendar.HOUR) + ":" + c.get(Calendar.MINUTE) + ".txt";
         File file;
         if(practiceTrials)
             file = new File(getDocStorageDir("StopTrialsPractice"), fileName);
@@ -144,10 +157,13 @@ public class ThankYou extends AppCompatActivity {
         out += String.format("%s %.0f %s", "Average response time for block 2: ", b2MRT, "ms\n");
         if(practiceTrials){
         out += String.format("%s %.0f %s", "Average response time for block 1 Practice: ", b1PMRT, "ms\n");
-        out += String.format("%s %.0f %s", "Average response time for block 2 Practice: ", b2PMRT, "ms\n");}
+        out += String.format("%s %.0f %s", "Average response time for block 2 Practice: ", b2PMRT, "ms\n");
+        }
         out += String.format("%s %.0f %s", "Average response time in stop trials: ", stopTimeAve, "ms\n");
         out += String.format("%s %.0f %s", "Average response time in non-stop trials: ", nonStopTimeAve, "ms\n");
         out += String.format("%s %d %s", "Time between vibration and tone: ", vibTime, "ms\n");
+        out += String.format("%s %.0f %s", "Percent Correct Block 1: ", percentCB1, "%\n");
+        out += String.format("%s %.0f %s", "Percent Correct Block 2: ", percentCB2, "%\n");
         out += String.format("%s %.2f %s", "% of stop trials correct: ", percentCorrectStop, "%\n");
         out += String.format("%s %.2f %s", "% of non-stop trials correct: ", percentCorrectGo, "%\n");
         out += String.format("%s %.2f %s", "% of trials that timed out: ", percentTimeout, "%\n");
@@ -183,5 +199,6 @@ public class ThankYou extends AppCompatActivity {
         } catch (IOException e) {
             Log.e("FILE", "file not written to");
         }
+        this.finishAffinity();
     }
 }
